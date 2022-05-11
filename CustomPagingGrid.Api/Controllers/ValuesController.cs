@@ -1,4 +1,5 @@
-﻿using CustomPagingGrid.Shared;
+﻿using CustomPagingGrid.Api.Models;
+using CustomPagingGrid.Shared;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -260,6 +261,33 @@ namespace CustomPagingGrid.Api.Controllers
                 UserName="user2043"
             },
         };
+        List<Products> products = new List<Products>
+        {
+            new Products
+            {
+                Name="Lap Top",
+                Quantity=43,
+                Price=500
+            },
+            new Products
+            {
+                Name="TV",
+                Quantity=20,
+                Price=1000
+            },
+            new Products
+            {
+                Name="Phone",
+                Quantity=100,
+                Price=200
+            },
+            new Products
+            {
+                Name="Watch",
+                Quantity=1000,
+                Price=50
+            },
+        };
 
 
         [HttpGet("data")]
@@ -272,6 +300,99 @@ namespace CustomPagingGrid.Api.Controllers
                 Value = GetValues.Skip(pageSize * (pageNumber - 1)).Take(pageSize).ToList()
             };
             return Ok(data);
+        }
+
+        [HttpGet("get-data")]
+        public async Task<IActionResult> GetDataFromQuery([FromQuery] QueryParameter query)
+        {
+            DataEnvelop data = new DataEnvelop();
+            switch (query.OrderBy)
+            {
+                case nameof(Value.UserName):
+                    data = new DataEnvelop
+                    {
+                        OdataContext = "",
+                        OdataCount = GetValues.Count,
+                        Value = GetValues
+                       .OrderBy(x => x.UserName)
+                       .Skip(query.Skip * (query.Top - 1)).
+                       Take(query.Top).ToList()
+                    };
+                    break;
+                case nameof(Value.FirstName):
+                    data = new DataEnvelop
+                    {
+                        OdataContext = "",
+                        OdataCount = GetValues.Count,
+                        Value = GetValues
+                       .OrderBy(x => x.FirstName)
+                       .Skip(query.Skip * (query.Top - 1)).
+                       Take(query.Top).ToList()
+                    };
+                    break;
+                case nameof(Value.LastName):
+                    data = new DataEnvelop
+                    {
+                        OdataContext = "",
+                        OdataCount = GetValues.Count,
+                        Value = GetValues
+                       .OrderBy(x => x.LastName)
+                       .Skip(query.Skip * (query.Top - 1)).
+                       Take(query.Top).ToList()
+                    };
+                    break;
+                case nameof(Value.MiddleName):
+                    data = new DataEnvelop
+                    {
+                        OdataContext = "",
+                        OdataCount = GetValues.Count,
+                        Value = GetValues
+                       .OrderBy(x => x.MiddleName)
+                       .Skip(query.Skip * (query.Top - 1)).
+                       Take(query.Top).ToList()
+                    };
+                    break;
+                case nameof(Value.Age):
+                    data = new DataEnvelop
+                    {
+                        OdataContext = "",
+                        OdataCount = GetValues.Count,
+                        Value = GetValues
+                       .OrderBy(x => x.Age)
+                       .Skip(query.Skip * (query.Top - 1)).
+                       Take(query.Top).ToList()
+                    };
+                    break;
+                case nameof(Value.Gender):
+                    data = new DataEnvelop
+                    {
+                        OdataContext = "",
+                        OdataCount = GetValues.Count,
+                        Value = GetValues
+                       .OrderBy(x => x.Gender)
+                       .Skip(query.Skip * (query.Top - 1)).
+                       Take(query.Top).ToList()
+                    };
+                    break;
+                default:
+                    data = new DataEnvelop
+                    {
+                        OdataContext = "",
+                        OdataCount = GetValues.Count,
+                        Value = GetValues
+                                .Skip(query.Skip * (query.Top - 1)).
+                                Take(query.Top).ToList()
+                    };
+                    break;
+
+            }
+            return Ok(data);
+        }
+
+        [HttpGet("get-products")]
+        public async Task<IActionResult> GetProductsAsync()
+        {
+            return Ok(products);
         }
     }
 }

@@ -1,47 +1,76 @@
 ﻿@page "/fetchdata"
 @using CustomPagingGrid.Shared
-@inject HttpClient Http
+@inject ServerService server
 
-<PageTitle>Weather forecast</PageTitle>
+<PageTitle>Dynamic Grid</PageTitle>
 
-<h1>Weather forecast</h1>
+<h1>Dynamic Grid</h1>
+<div class="pb-4">
+    <button class="btn btn-warning" @onclick="(()=>FetchOldData())">Display old data</button>
+    <button class="btn btn-primary" @onclick="(()=>FetchDifferentData())">Display new Data</button>
+</div>
+@*<table class="table">
+    <thead>
+    <tr>
+    @foreach (var p in GetValues.First().GetType().GetProperties())
+    {
+    <th>@p.Name</th>
+    }
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in GetValues)
+    {
+    <tr>
+    @foreach (var p in item.GetType().GetProperties())
+    {
+    <td>@p.GetValue(item)</td>
+    }
+    </tr>
+    }
+    </tbody>
+    </table>*@
 
-<p>This component demonstrates fetching data from the server.</p>
-
-@if (forecasts == null)
+<b />
+<b />
+@if (GetValues.Any())
 {
-    <p><em>Loading...</em></p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Temp. (C)</th>
-                <th>Temp. (F)</th>
-                <th>Summary</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var forecast in forecasts)
-            {
-                <tr>
-                    <td>@forecast.Date.ToShortDateString()</td>
-                    <td>@forecast.TemperatureC</td>
-                    <td>@forecast.TemperatureF</td>
-                    <td>@forecast.Summary</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
 
+    <TelerikGrid Data="GetValues" Sortable=true Pageable=true FilterMode="@Telerik.Blazor.GridFilterMode.FilterMenu">
+        <GridColumns>
+            @foreach (var p in GetValues.First().GetType().GetProperties())
+        {
+            <GridColumn Field="@p.Name" Title="@p.Name" FieldType="p.PropertyType" />
+        }
+    </GridColumns>
+</TelerikGrid>
+}
 @code {
-    private WeatherForecast[]? forecasts;
+    List<Object> GetValues = new List<Object>();
 
     protected override async Task OnInitializedAsync()
     {
-        forecasts = await Http.GetFromJsonAsync<WeatherForecast[]>("WeatherForecast");
+        var data = await server.GetDataAsync(10, 1);
+        if (data is not null)
+        {
+            GetValues.AddRange(data.Value);
+        }
+    }
+
+    public async Task FetchDifferentData()
+    {
+        var response = await server.GetProductsAsync();
+        GetValues.Clear();//empty the list first
+        GetValues = new List<object>(response);
+    }
+
+    public async Task FetchOldData()
+    {
+        var data = await server.GetDataAsync(10, 1);
+        if (data is not null)
+        {
+            GetValues.Clear();//empty the list first
+            GetValues = new List<object>(data.Value);
+        }
     }
 }

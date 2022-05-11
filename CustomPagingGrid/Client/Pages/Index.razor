@@ -1,30 +1,50 @@
 ﻿@page "/"
 
+@using Telerik.DataSource.Extensions;
+@using Telerik.Blazor.Extensions;
+
 @inject ServerService server
 
 <PageTitle>Index</PageTitle>
 
 <TelerikGrid TItem="@Value"
              OnRead="@ReadItems"
-             Pageable="true" PageSize="10" FilterMode="@Telerik.Blazor.GridFilterMode.FilterMenu">
+             Pageable="true" PageSize="10"
+             Sortable="true"
+             Resizable="true"
+             Navigable="true">
     <GridColumns>
-        <GridColumn Field=@nameof(Value.UserName) Title="Username" />
-        <GridColumn Field=@nameof(Value.FirstName) Title="Firstname" />
-        <GridColumn Field=@nameof(Value.LastName) Title="Lastname" />
-        <GridColumn Field=@nameof(Value.MiddleName) Title="Middlename" />
-        <GridColumn Field=@nameof(Value.Gender) Title="Gender" />
-        <GridColumn Field=@nameof(Value.Age) Title="Age" />
-        <GridColumn Field=@nameof(Value.FavoriteFeature) Title="Favorite-feature" />
+        <GridColumn Field=@nameof(Value.UserName) Title="Username" FieldType="typeof(string)" />
+        <GridColumn Field=@nameof(Value.FirstName) Title="Firstname" FieldType="typeof(string)" />
+        <GridColumn Field=@nameof(Value.LastName) Title="Lastname" FieldType="typeof(string)" />
+        <GridColumn Field=@nameof(Value.MiddleName) Title="Middlename" FieldType="typeof(string)" />
+        <GridColumn Field=@nameof(Value.Gender) Title="Gender" FieldType="typeof(string)" />
+        <GridColumn Field=@nameof(Value.Age) Title="Age" FieldType="typeof(int)" />
+        <GridColumn Field=@nameof(Value.FavoriteFeature) Title="Favorite-feature" FieldType="typeof(string)" />
     </GridColumns>
 </TelerikGrid>
 
+
 @code {
+    TelerikGrid<object> telerikGrid { get; set; }
+    List<Object> GetValues = new List<Object>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var data = await server.GetDataAsync(10, 1);
+        if (data is not null)
+        {
+            GetValues.AddRange(data.Value);
+        }
+    }
+
     protected async Task ReadItems(GridReadEventArgs args)
     {
         Console.WriteLine("data requested: " + args.Request);
 
+        var filter = args.Request.ToODataString();
         //this is a basic imlementation of custom paging of the grid
-        DataEnvelop DataResult = await FetchPagedData(args.Request.Page, args.Request.PageSize, args.Request.Sorts);
+        DataEnvelop DataResult = await FetchPagedData(args.Request.Page, args.Request.PageSize, filter);
 
         //use the current page of data and the total amount of items in the data source that are returned from the service
         args.Data = DataResult.Value;
@@ -47,12 +67,21 @@
         }
     }
 
-    public async Task<DataEnvelop> FetchPagedData(int pageNumber, int pageSize, IList<Telerik.DataSource.SortDescriptor> sorts)
+    public async Task<DataEnvelop> FetchPagedData(int pageNumber, int pageSize, string filter)
     {
-        var data = await server.GetDataAsync(pageSize, pageNumber);
+        var desc = filter.Replace("$", string.Empty);;
+        var d = desc.Split("&");
+        var t = d[d.Length - 2] = $"skip={pageNumber}";
+        var cleaned = string.Join("&", d);
+        var data = await server.GetDataAsync(cleaned);
         if (data is not null)
+        {
+            GetValues.AddRange(data.Value);
             return data;
+        }
 
         return new DataEnvelop();//return an empty object.
     }
+
+
 }
